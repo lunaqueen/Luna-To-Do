@@ -15,6 +15,24 @@ class MainFlutterWindow: NSWindow {
 
     RegisterGeneratedPlugins(registry: flutterViewController)
 
+    let windowChannel = FlutterMethodChannel(
+      name: "luna_todo/window",
+      binaryMessenger: flutterViewController.engine.binaryMessenger
+    )
+    windowChannel.setMethodCallHandler { [weak self] call, result in
+      guard call.method == "enableTransparency" else {
+        result(FlutterMethodNotImplemented)
+        return
+      }
+      self?.isOpaque = false
+      self?.backgroundColor = .clear
+      self?.hasShadow = false
+      flutterViewController.view.wantsLayer = true
+      flutterViewController.view.layer?.isOpaque = false
+      flutterViewController.view.layer?.backgroundColor = NSColor.clear.cgColor
+      result(nil)
+    }
+
     super.awakeFromNib()
   }
 }

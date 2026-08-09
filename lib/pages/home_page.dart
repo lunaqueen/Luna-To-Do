@@ -36,11 +36,9 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: Colors.transparent,
       body: Container(
         decoration: BoxDecoration(
-          color: settings.transparentBackground || settings.opacity <= 0
+          color: settings.transparentBackground
               ? Colors.transparent
-              : Color(
-                  settings.backgroundColor,
-                ).withValues(alpha: settings.opacity),
+              : Color(settings.backgroundColor),
         ),
         child: Stack(
           children: [
@@ -548,9 +546,7 @@ class _SettingsSheetState extends State<_SettingsSheet> {
         decoration: BoxDecoration(
           color: settings.transparentBackground
               ? Colors.transparent
-              : Color(
-                  settings.backgroundColor,
-                ).withValues(alpha: settings.opacity),
+              : Color(settings.backgroundColor),
         ),
         child: DefaultTextStyle.merge(
           style: TextStyle(color: Color(settings.textColor)),
@@ -578,7 +574,7 @@ class _SettingsSheetState extends State<_SettingsSheet> {
                 ),
                 const SizedBox(height: 18),
                 _slider(
-                  '窗口透明度',
+                  '页面透明度',
                   settings.opacity,
                   0,
                   1,

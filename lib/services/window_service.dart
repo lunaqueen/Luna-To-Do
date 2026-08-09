@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:tray_manager/tray_manager.dart';
@@ -10,6 +11,7 @@ import 'package:window_manager/window_manager.dart';
 import '../models/app_settings.dart';
 
 class WindowService with TrayListener {
+  static const _nativeWindowChannel = MethodChannel('luna_todo/window');
   Future<void> Function()? _onUnlock;
   Timer? _hitTestTimer;
   bool _locked = false;
@@ -69,11 +71,14 @@ class WindowService with TrayListener {
 
   Future<void> apply(AppSettings settings) async {
     if (!Platform.isMacOS && !Platform.isWindows) return;
-    // Keep the native window fully opaque so text never fades with the
-    // background. The panel applies opacity only to its own background.
-    await windowManager.setOpacity(1.0);
+    // Opacity affects the entire application window. The selected background
+    // color is painted independently by Flutter.
+    await windowManager.setOpacity(settings.opacity);
     await windowManager.setBackgroundColor(Colors.transparent);
     await windowManager.setHasShadow(false);
+    if (Platform.isMacOS) {
+      await _nativeWindowChannel.invokeMethod<void>('enableTransparency');
+    }
     await windowManager.setAlwaysOnTop(settings.alwaysOnTop);
     // Native click-through is intentional while locked: other apps remain
     // usable underneath the always-on-top todo. Unlock from the system tray.

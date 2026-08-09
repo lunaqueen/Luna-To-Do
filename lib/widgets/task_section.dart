@@ -2,114 +2,55 @@ import 'package:flutter/material.dart';
 import '../models/task.dart';
 import 'task_item.dart';
 
+class TaskSection extends StatelessWidget {
+  final String title;
 
-class TaskSection extends StatelessWidget{
+  final List<Task> tasks;
 
+  final Function(Task) onComplete;
 
-final String title;
+  const TaskSection({
+    super.key,
 
-final List<Task> tasks;
+    required this.title,
 
-final Function(Task) onComplete;
+    required this.tasks,
 
+    required this.onComplete,
+  });
 
-const TaskSection({
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(15),
 
-super.key,
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey),
 
-required this.title,
+        borderRadius: BorderRadius.circular(12),
+      ),
 
-required this.tasks,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
 
-required this.onComplete,
+        children: [
+          Text(
+            title,
 
-});
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
 
+          const Divider(),
 
-
-@override
-Widget build(BuildContext context){
-
-
-return Container(
-
-padding:const EdgeInsets.all(15),
-
-decoration:BoxDecoration(
-
-border:Border.all(
-color:Colors.grey
-),
-
-borderRadius:
-BorderRadius.circular(12)
-
-),
-
-
-child:Column(
-
-crossAxisAlignment:
-CrossAxisAlignment.start,
-
-
-children:[
-
-
-Text(
-
-title,
-
-style:
-const TextStyle(
-
-fontSize:18,
-
-fontWeight:
-FontWeight.bold
-
-),
-
-),
-
-
-const Divider(),
-
-
-Expanded(
-
-child:ListView(
-
-children:
-
-tasks.map(
-
-(task)=>
-
-TaskItem(
-
-task:task,
-
-onComplete:onComplete,
-
-)
-
-).toList(),
-
-),
-
-)
-
-]
-
-
-)
-
-);
-
-
-}
-
-
-
+          Expanded(
+            child: ListView(
+              children: tasks
+                  .map((task) => TaskItem(task: task, onComplete: onComplete))
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

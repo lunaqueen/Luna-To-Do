@@ -1,69 +1,29 @@
 import 'package:flutter/material.dart';
 import '../models/task.dart';
 
+class TaskItem extends StatelessWidget {
+  final Task task;
 
+  final Function(Task) onComplete;
 
-class TaskItem extends StatelessWidget{
+  const TaskItem({super.key, required this.task, required this.onComplete});
 
+  @override
+  Widget build(BuildContext context) {
+    return CheckboxListTile(
+      value: task.completed,
 
-final Task task;
+      title: Text(
+        task.title,
 
-final Function(Task) onComplete;
+        style: TextStyle(
+          decoration: task.completed ? TextDecoration.lineThrough : null,
+        ),
+      ),
 
-
-const TaskItem({
-
-super.key,
-
-required this.task,
-
-required this.onComplete,
-
-});
-
-
-
-@override
-Widget build(BuildContext context){
-
-
-return CheckboxListTile(
-
-value:task.completed,
-
-
-title:Text(
-
-task.title,
-
-style:TextStyle(
-
-decoration:
-
-task.completed
-
-?
-
-TextDecoration.lineThrough
-
-:null
-
-),
-
-),
-
-
-onChanged:(value){
-
-onComplete(task);
-
-},
-
-
-);
-
-}
-
-
-
+      onChanged: (value) {
+        onComplete(task);
+      },
+    );
+  }
 }
