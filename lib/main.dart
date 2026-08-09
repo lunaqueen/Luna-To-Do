@@ -11,6 +11,10 @@ Future<void> main() async {
   await windows.initialize();
   final tasks = TaskService(StorageService());
   await tasks.load();
+  windows.setUnlockHandler(
+    () =>
+        tasks.updateSettings(tasks.settings.copyWith(mousePassthrough: false)),
+  );
   await windows.apply(tasks.settings);
   runApp(LunaTodo(tasks: tasks, windows: windows));
 }

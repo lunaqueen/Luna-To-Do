@@ -8,6 +8,8 @@ class AppSettings {
     this.mousePassthrough = false,
     this.remindersEnabled = true,
     this.launchAtStartup = false,
+    this.backgroundColor = 0xfffcfbff,
+    this.transparentBackground = false,
   });
 
   final double opacity;
@@ -18,6 +20,8 @@ class AppSettings {
   final bool mousePassthrough;
   final bool remindersEnabled;
   final bool launchAtStartup;
+  final int backgroundColor;
+  final bool transparentBackground;
 
   AppSettings copyWith({
     double? opacity,
@@ -28,6 +32,8 @@ class AppSettings {
     bool? mousePassthrough,
     bool? remindersEnabled,
     bool? launchAtStartup,
+    int? backgroundColor,
+    bool? transparentBackground,
   }) => AppSettings(
     opacity: opacity ?? this.opacity,
     fontScale: fontScale ?? this.fontScale,
@@ -37,6 +43,8 @@ class AppSettings {
     mousePassthrough: mousePassthrough ?? this.mousePassthrough,
     remindersEnabled: remindersEnabled ?? this.remindersEnabled,
     launchAtStartup: launchAtStartup ?? this.launchAtStartup,
+    backgroundColor: backgroundColor ?? this.backgroundColor,
+    transparentBackground: transparentBackground ?? this.transparentBackground,
   );
 
   factory AppSettings.fromJson(Map<String, dynamic>? json) => AppSettings(
@@ -48,6 +56,8 @@ class AppSettings {
     mousePassthrough: json?['mousePassthrough'] as bool? ?? false,
     remindersEnabled: json?['remindersEnabled'] as bool? ?? true,
     launchAtStartup: json?['launchAtStartup'] as bool? ?? false,
+    backgroundColor: json?['backgroundColor'] as int? ?? 0xfffcfbff,
+    transparentBackground: json?['transparentBackground'] as bool? ?? false,
   );
 
   Map<String, dynamic> toJson() => {
@@ -59,5 +69,7 @@ class AppSettings {
     'mousePassthrough': mousePassthrough,
     'remindersEnabled': remindersEnabled,
     'launchAtStartup': launchAtStartup,
+    'backgroundColor': backgroundColor,
+    'transparentBackground': transparentBackground,
   };
 }

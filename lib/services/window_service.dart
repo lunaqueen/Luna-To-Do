@@ -2,14 +2,22 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:launch_at_startup/launch_at_startup.dart';
+import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../models/app_settings.dart';
 
-class WindowService {
+class WindowService with TrayListener {
+  Future<void> Function()? _onUnlock;
+
+  void setUnlockHandler(Future<void> Function() handler) {
+    _onUnlock = handler;
+  }
+
   Future<void> initialize() async {
     if (!Platform.isMacOS && !Platform.isWindows) return;
     await windowManager.ensureInitialized();
+    trayManager.addListener(this);
     const options = WindowOptions(
       size: Size(760, 600),
       minimumSize: Size(480, 400),
@@ -23,6 +31,25 @@ class WindowService {
       await windowManager.show();
       await windowManager.focus();
     });
+    await _setupTray();
+  }
+
+  Future<void> _setupTray() async {
+    final iconPath = Platform.isWindows
+        ? 'windows/runner/resources/app_icon.ico'
+        : 'macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_16.png';
+    await trayManager.setIcon(iconPath);
+    await trayManager.setToolTip('Luna To-Do');
+    await trayManager.setContextMenu(
+      Menu(
+        items: [
+          MenuItem(key: 'unlock_window', label: '解除窗口锁定'),
+          MenuItem(key: 'show_window', label: '显示 Luna To-Do'),
+          MenuItem.separator(),
+          MenuItem(key: 'quit_app', label: '退出'),
+        ],
+      ),
+    );
   }
 
   Future<void> apply(AppSettings settings) async {
@@ -51,5 +78,25 @@ class WindowService {
     } catch (_) {
       /* Platform setup can be unavailable during development. */
     }
+  }
+
+  @override
+  void onTrayMenuItemClick(MenuItem menuItem) async {
+    switch (menuItem.key) {
+      case 'unlock_window':
+        await windowManager.setIgnoreMouseEvents(false);
+        await _onUnlock?.call();
+      case 'show_window':
+        await windowManager.show();
+        await windowManager.focus();
+      case 'quit_app':
+        await windowManager.destroy();
+    }
+  }
+
+  @override
+  void onTrayIconMouseDown() {
+    windowManager.show();
+    windowManager.focus();
   }
 }

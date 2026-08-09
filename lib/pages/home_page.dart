@@ -37,43 +37,62 @@ class _HomePageState extends State<HomePage> {
       body: Container(
         margin: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: const Color(0xfffcfbff),
+          color: settings.transparentBackground
+              ? Colors.transparent
+              : Color(settings.backgroundColor),
           borderRadius: BorderRadius.circular(22),
-          boxShadow: const [
-            BoxShadow(color: Color(0x33000000), blurRadius: 20),
-          ],
+          boxShadow: settings.transparentBackground
+              ? null
+              : const [BoxShadow(color: Color(0x33000000), blurRadius: 20)],
         ),
-        child: DefaultTextStyle.merge(
-          style: TextStyle(fontSize: 14 * settings.fontScale),
-          child: Column(
-            children: [
-              _TitleBar(
-                settings: settings,
+        child: Stack(
+          children: [
+            DefaultTextStyle.merge(
+              style: TextStyle(fontSize: 14 * settings.fontScale),
+              child: Column(
+                children: [
+                  _TitleBar(
+                    settings: settings,
+                    onSettings: _showSettings,
+                    onAdd: _showAddDialog,
+                  ),
+                  Expanded(
+                    child: IgnorePointer(
+                      ignoring: settings.mousePassthrough,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) =>
+                            constraints.maxWidth < 620
+                            ? ListView(
+                                padding: const EdgeInsets.all(16),
+                                children: [
+                                  _fixedPanel(),
+                                  const SizedBox(height: 16),
+                                  _temporaryPanel(),
+                                ],
+                              )
+                            : Row(
+                                children: [
+                                  Expanded(child: _fixedPanel()),
+                                  const VerticalDivider(width: 1),
+                                  Expanded(child: _temporaryPanel()),
+                                ],
+                              ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              right: 16,
+              bottom: 14,
+              child: _LockControl(
+                locked: settings.mousePassthrough,
+                onPressed: _toggleLock,
                 onSettings: _showSettings,
-                onAdd: _showAddDialog,
               ),
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) => constraints.maxWidth < 620
-                      ? ListView(
-                          padding: const EdgeInsets.all(16),
-                          children: [
-                            _fixedPanel(),
-                            const SizedBox(height: 16),
-                            _temporaryPanel(),
-                          ],
-                        )
-                      : Row(
-                          children: [
-                            Expanded(child: _fixedPanel()),
-                            const VerticalDivider(width: 1),
-                            Expanded(child: _temporaryPanel()),
-                          ],
-                        ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -195,6 +214,50 @@ class _HomePageState extends State<HomePage> {
     showDragHandle: true,
     builder: (_) =>
         _SettingsSheet(tasks: widget.tasks, windows: widget.windows),
+  );
+
+  Future<void> _toggleLock() async {
+    final next = widget.tasks.settings.copyWith(
+      mousePassthrough: !widget.tasks.settings.mousePassthrough,
+    );
+    await widget.tasks.updateSettings(next);
+    await widget.windows.apply(next);
+  }
+}
+
+class _LockControl extends StatelessWidget {
+  const _LockControl({
+    required this.locked,
+    required this.onPressed,
+    required this.onSettings,
+  });
+
+  final bool locked;
+  final VoidCallback onPressed;
+  final VoidCallback onSettings;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: const Color(0xff8064c7),
+    elevation: 3,
+    borderRadius: BorderRadius.circular(22),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          tooltip: locked ? '解除窗口锁定' : '锁定窗口',
+          onPressed: onPressed,
+          color: Colors.white,
+          icon: Icon(locked ? Icons.lock : Icons.lock_open_rounded),
+        ),
+        IconButton(
+          tooltip: '设置',
+          onPressed: onSettings,
+          color: Colors.white,
+          icon: const Icon(Icons.tune_rounded),
+        ),
+      ],
+    ),
   );
 }
 
@@ -520,6 +583,51 @@ class _SettingsSheetState extends State<_SettingsSheet> {
               1,
               (v) => _save(settings.copyWith(opacity: v)),
             ),
+            const SizedBox(height: 8),
+            const Text('背景', style: TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final color in const [
+                  0xfffcfbff,
+                  0xfffff7ed,
+                  0xfff0fdf4,
+                  0xffeff6ff,
+                  0xfffdf2f8,
+                  0xff1f2937,
+                ])
+                  ChoiceChip(
+                    label: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: Color(color),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xff928a9f)),
+                      ),
+                    ),
+                    selected:
+                        !settings.transparentBackground &&
+                        settings.backgroundColor == color,
+                    onSelected: (_) => _save(
+                      settings.copyWith(
+                        backgroundColor: color,
+                        transparentBackground: false,
+                      ),
+                    ),
+                  ),
+                ChoiceChip(
+                  avatar: const Icon(Icons.layers_clear_outlined, size: 18),
+                  label: const Text('无背景'),
+                  selected: settings.transparentBackground,
+                  onSelected: (_) =>
+                      _save(settings.copyWith(transparentBackground: true)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             _slider(
               '字体大小',
               settings.fontScale,
@@ -550,7 +658,7 @@ class _SettingsSheetState extends State<_SettingsSheet> {
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('锁定窗口（鼠标穿透）'),
-              subtitle: const Text('开启后需从系统任务栏恢复操作'),
+              subtitle: const Text('锁定入口在主页右下角；也可从系统托盘解除'),
               value: settings.mousePassthrough,
               onChanged: (v) => _save(settings.copyWith(mousePassthrough: v)),
             ),
