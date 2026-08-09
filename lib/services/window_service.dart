@@ -1,7 +1,8 @@
 import 'dart:io';
-import 'dart:ui';
 
+import 'package:flutter/services.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -35,9 +36,7 @@ class WindowService with TrayListener {
   }
 
   Future<void> _setupTray() async {
-    final iconPath = Platform.isWindows
-        ? 'windows/runner/resources/app_icon.ico'
-        : 'macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_16.png';
+    final iconPath = await _copyTrayIcon();
     await trayManager.setIcon(iconPath);
     await trayManager.setToolTip('Luna To-Do');
     await trayManager.setContextMenu(
@@ -50,6 +49,21 @@ class WindowService with TrayListener {
         ],
       ),
     );
+  }
+
+  Future<String> _copyTrayIcon() async {
+    final isWindows = Platform.isWindows;
+    final asset = isWindows
+        ? 'windows/runner/resources/app_icon.ico'
+        : 'macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_32.png';
+    final extension = isWindows ? 'ico' : 'png';
+    final directory = await getApplicationSupportDirectory();
+    final file = File('${directory.path}/luna_tray_icon.$extension');
+    if (!await file.exists()) {
+      final data = await rootBundle.load(asset);
+      await file.writeAsBytes(data.buffer.asUint8List(), flush: true);
+    }
+    return file.path;
   }
 
   Future<void> apply(AppSettings settings) async {
