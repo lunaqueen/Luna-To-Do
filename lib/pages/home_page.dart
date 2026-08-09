@@ -657,8 +657,8 @@ class _SettingsSheetState extends State<_SettingsSheet> {
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('锁定窗口（鼠标穿透）'),
-              subtitle: const Text('锁定入口在主页右下角；也可从系统托盘解除'),
+              title: const Text('锁定内容区'),
+              subtitle: const Text('锁定后待办不可点击，设置和解锁按钮仍可操作'),
               value: settings.mousePassthrough,
               onChanged: (v) => _save(settings.copyWith(mousePassthrough: v)),
             ),

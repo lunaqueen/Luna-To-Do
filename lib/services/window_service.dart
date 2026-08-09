@@ -58,10 +58,11 @@ class WindowService with TrayListener {
     if (!Platform.isMacOS && !Platform.isWindows) return;
     await windowManager.setOpacity(settings.opacity);
     await windowManager.setAlwaysOnTop(settings.alwaysOnTop);
-    await windowManager.setIgnoreMouseEvents(
-      settings.mousePassthrough,
-      forward: true,
-    );
+    // Do not make the native window click-through here. Native click-through
+    // applies to the entire window, including the unlock and settings
+    // controls. The page uses IgnorePointer for the task content instead,
+    // which keeps the recovery controls usable in every persisted state.
+    await windowManager.setIgnoreMouseEvents(false);
     await windowManager.setSize(
       Size(settings.windowWidth, settings.windowHeight),
     );
@@ -86,7 +87,6 @@ class WindowService with TrayListener {
   void onTrayMenuItemClick(MenuItem menuItem) async {
     switch (menuItem.key) {
       case 'unlock_window':
-        await windowManager.setIgnoreMouseEvents(false);
         await _onUnlock?.call();
       case 'show_window':
         await windowManager.show();
