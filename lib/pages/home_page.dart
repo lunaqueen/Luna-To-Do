@@ -60,6 +60,7 @@ class _HomePageState extends State<HomePage> {
                     settings: settings,
                     onSettings: _showSettings,
                     onAdd: _showAddDialog,
+                    onLock: _toggleLock,
                   ),
                   Expanded(
                     child: IgnorePointer(
@@ -86,15 +87,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ],
-              ),
-            ),
-            Positioned(
-              right: 16,
-              bottom: 14,
-              child: _LockControl(
-                locked: settings.mousePassthrough,
-                onPressed: _toggleLock,
-                onSettings: _showSettings,
               ),
             ),
           ],
@@ -126,6 +118,7 @@ class _HomePageState extends State<HomePage> {
           ...widget.tasks.fixedTasks.map(
             (task) => _TaskTile(
               task: task,
+              textColor: Color(widget.tasks.settings.textColor),
               onToggle: () => widget.tasks.toggleFixed(task),
               onDelete: () => widget.tasks.deleteTask(task),
             ),
@@ -162,6 +155,7 @@ class _HomePageState extends State<HomePage> {
                       ...entry.value.map(
                         (task) => _TaskTile(
                           task: task,
+                          textColor: Color(widget.tasks.settings.textColor),
                           onToggle: () => widget.tasks.completeTemporary(task),
                           onDelete: () => widget.tasks.deleteTask(task),
                         ),
@@ -213,15 +207,20 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> _showSettings() async => showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    enableDrag: false,
-    isDismissible: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) =>
-        _SettingsSheet(tasks: widget.tasks, windows: widget.windows),
-  );
+  Future<void> _showSettings() async {
+    widget.windows.setSettingsOpen(true);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      enableDrag: false,
+      isDismissible: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) =>
+          _SettingsSheet(tasks: widget.tasks, windows: widget.windows),
+    );
+    widget.windows.setSettingsOpen(false);
+    await widget.windows.apply(widget.tasks.settings);
+  }
 
   Future<void> _toggleLock() async {
     final next = widget.tasks.settings.copyWith(
@@ -232,51 +231,17 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class _LockControl extends StatelessWidget {
-  const _LockControl({
-    required this.locked,
-    required this.onPressed,
-    required this.onSettings,
-  });
-
-  final bool locked;
-  final VoidCallback onPressed;
-  final VoidCallback onSettings;
-
-  @override
-  Widget build(BuildContext context) => Material(
-    color: const Color(0xff8064c7),
-    elevation: 3,
-    borderRadius: BorderRadius.circular(22),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          tooltip: locked ? '解除窗口锁定' : '锁定窗口',
-          onPressed: onPressed,
-          color: Colors.white,
-          icon: Icon(locked ? Icons.lock : Icons.lock_open_rounded),
-        ),
-        IconButton(
-          tooltip: '设置',
-          onPressed: onSettings,
-          color: Colors.white,
-          icon: const Icon(Icons.tune_rounded),
-        ),
-      ],
-    ),
-  );
-}
-
 class _TitleBar extends StatelessWidget {
   const _TitleBar({
     required this.settings,
     required this.onSettings,
     required this.onAdd,
+    required this.onLock,
   });
   final AppSettings settings;
   final VoidCallback onSettings;
   final VoidCallback onAdd;
+  final VoidCallback onLock;
   @override
   Widget build(BuildContext context) => DragToMoveArea(
     child: Padding(
@@ -308,6 +273,15 @@ class _TitleBar extends StatelessWidget {
             tooltip: '设置',
             onPressed: onSettings,
             icon: const Icon(Icons.tune_rounded),
+          ),
+          IconButton(
+            tooltip: settings.mousePassthrough ? '解锁内容区' : '锁定内容区',
+            onPressed: onLock,
+            icon: Icon(
+              settings.mousePassthrough
+                  ? Icons.lock_rounded
+                  : Icons.lock_open_rounded,
+            ),
           ),
           IconButton(
             tooltip: '最小化',
@@ -377,10 +351,12 @@ class _EmptyState extends StatelessWidget {
 class _TaskTile extends StatelessWidget {
   const _TaskTile({
     required this.task,
+    required this.textColor,
     required this.onToggle,
     required this.onDelete,
   });
   final Task task;
+  final Color textColor;
   final VoidCallback onToggle, onDelete;
   @override
   Widget build(BuildContext context) {
@@ -414,7 +390,7 @@ class _TaskTile extends StatelessWidget {
                               : null,
                           color: task.completed
                               ? const Color(0xff928a9f)
-                              : null,
+                              : textColor,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -426,7 +402,7 @@ class _TaskTile extends StatelessWidget {
                           fontSize: 12,
                           color: isOverdue
                               ? Colors.red.shade400
-                              : const Color(0xff928a9f),
+                              : textColor.withValues(alpha: .65),
                         ),
                       ),
                     ],

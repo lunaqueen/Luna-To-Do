@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
+import 'package:screen_retriever/screen_retriever.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -9,9 +11,20 @@ import '../models/app_settings.dart';
 
 class WindowService with TrayListener {
   Future<void> Function()? _onUnlock;
+  Timer? _hitTestTimer;
+  bool _locked = false;
+  bool _toolbarInteractive = false;
+  bool _settingsOpen = false;
 
   void setUnlockHandler(Future<void> Function() handler) {
     _onUnlock = handler;
+  }
+
+  void setSettingsOpen(bool open) {
+    _settingsOpen = open;
+    if (open && _locked) {
+      windowManager.setIgnoreMouseEvents(false);
+    }
   }
 
   Future<void> initialize() async {
@@ -64,11 +77,46 @@ class WindowService with TrayListener {
     await windowManager.setAlwaysOnTop(settings.alwaysOnTop);
     // Native click-through is intentional while locked: other apps remain
     // usable underneath the always-on-top todo. Unlock from the system tray.
-    await windowManager.setIgnoreMouseEvents(settings.mousePassthrough);
+    _locked = settings.mousePassthrough;
+    if (_locked && !_settingsOpen) {
+      await windowManager.setIgnoreMouseEvents(true);
+      _startToolbarHitTest();
+    } else {
+      _stopToolbarHitTest();
+      await windowManager.setIgnoreMouseEvents(false);
+    }
     await windowManager.setSize(
       Size(settings.windowWidth, settings.windowHeight),
     );
     await _setLaunchAtStartup(settings.launchAtStartup);
+  }
+
+  void _startToolbarHitTest() {
+    _hitTestTimer ??= Timer.periodic(
+      const Duration(milliseconds: 100),
+      (_) => _updateToolbarHitTest(),
+    );
+  }
+
+  void _stopToolbarHitTest() {
+    _hitTestTimer?.cancel();
+    _hitTestTimer = null;
+    _toolbarInteractive = false;
+  }
+
+  Future<void> _updateToolbarHitTest() async {
+    if (!_locked || _settingsOpen) return;
+    final position = await windowManager.getPosition();
+    final size = await windowManager.getSize();
+    final cursor = await screenRetriever.getCursorScreenPoint();
+    final inToolbar =
+        cursor.dx >= position.dx &&
+        cursor.dx <= position.dx + size.width &&
+        cursor.dy >= position.dy &&
+        cursor.dy <= position.dy + 78;
+    if (inToolbar == _toolbarInteractive) return;
+    _toolbarInteractive = inToolbar;
+    await windowManager.setIgnoreMouseEvents(!inToolbar);
   }
 
   Future<void> _setLaunchAtStartup(bool enabled) async {
@@ -89,6 +137,8 @@ class WindowService with TrayListener {
   void onTrayMenuItemClick(MenuItem menuItem) async {
     switch (menuItem.key) {
       case 'unlock_window':
+        _locked = false;
+        _stopToolbarHitTest();
         await windowManager.setIgnoreMouseEvents(false);
         await _onUnlock?.call();
       case 'show_window':
