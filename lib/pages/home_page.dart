@@ -35,17 +35,12 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
-        margin: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: settings.transparentBackground
+          color: settings.transparentBackground || settings.opacity <= 0
               ? Colors.transparent
               : Color(
                   settings.backgroundColor,
                 ).withValues(alpha: settings.opacity),
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: settings.transparentBackground
-              ? null
-              : const [BoxShadow(color: Color(0x33000000), blurRadius: 20)],
         ),
         child: Stack(
           children: [
@@ -553,8 +548,9 @@ class _SettingsSheetState extends State<_SettingsSheet> {
         decoration: BoxDecoration(
           color: settings.transparentBackground
               ? Colors.transparent
-              : Color(settings.backgroundColor).withValues(alpha: 1),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+              : Color(
+                  settings.backgroundColor,
+                ).withValues(alpha: settings.opacity),
         ),
         child: DefaultTextStyle.merge(
           style: TextStyle(color: Color(settings.textColor)),
@@ -584,7 +580,7 @@ class _SettingsSheetState extends State<_SettingsSheet> {
                 _slider(
                   '窗口透明度',
                   settings.opacity,
-                  0.35,
+                  0,
                   1,
                   (v) => _save(settings.copyWith(opacity: v)),
                 ),
