@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
@@ -56,13 +56,15 @@ class WindowService with TrayListener {
 
   Future<void> apply(AppSettings settings) async {
     if (!Platform.isMacOS && !Platform.isWindows) return;
-    await windowManager.setOpacity(settings.opacity);
+    // Keep the native window fully opaque so text never fades with the
+    // background. The panel applies opacity only to its own background.
+    await windowManager.setOpacity(1.0);
+    await windowManager.setBackgroundColor(Colors.transparent);
+    await windowManager.setHasShadow(false);
     await windowManager.setAlwaysOnTop(settings.alwaysOnTop);
-    // Do not make the native window click-through here. Native click-through
-    // applies to the entire window, including the unlock and settings
-    // controls. The page uses IgnorePointer for the task content instead,
-    // which keeps the recovery controls usable in every persisted state.
-    await windowManager.setIgnoreMouseEvents(false);
+    // Native click-through is intentional while locked: other apps remain
+    // usable underneath the always-on-top todo. Unlock from the system tray.
+    await windowManager.setIgnoreMouseEvents(settings.mousePassthrough);
     await windowManager.setSize(
       Size(settings.windowWidth, settings.windowHeight),
     );
@@ -87,6 +89,7 @@ class WindowService with TrayListener {
   void onTrayMenuItemClick(MenuItem menuItem) async {
     switch (menuItem.key) {
       case 'unlock_window':
+        await windowManager.setIgnoreMouseEvents(false);
         await _onUnlock?.call();
       case 'show_window':
         await windowManager.show();

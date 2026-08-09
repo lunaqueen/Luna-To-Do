@@ -39,7 +39,9 @@ class _HomePageState extends State<HomePage> {
         decoration: BoxDecoration(
           color: settings.transparentBackground
               ? Colors.transparent
-              : Color(settings.backgroundColor),
+              : Color(
+                  settings.backgroundColor,
+                ).withValues(alpha: settings.opacity),
           borderRadius: BorderRadius.circular(22),
           boxShadow: settings.transparentBackground
               ? null
@@ -48,7 +50,10 @@ class _HomePageState extends State<HomePage> {
         child: Stack(
           children: [
             DefaultTextStyle.merge(
-              style: TextStyle(fontSize: 14 * settings.fontScale),
+              style: TextStyle(
+                fontSize: 14 * settings.fontScale,
+                color: Color(settings.textColor),
+              ),
               child: Column(
                 children: [
                   _TitleBar(
@@ -211,7 +216,9 @@ class _HomePageState extends State<HomePage> {
   Future<void> _showSettings() async => showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    showDragHandle: true,
+    enableDrag: false,
+    isDismissible: true,
+    backgroundColor: Colors.transparent,
     builder: (_) =>
         _SettingsSheet(tasks: widget.tasks, windows: widget.windows),
   );
@@ -566,116 +573,178 @@ class _SettingsSheetState extends State<_SettingsSheet> {
         24,
         24 + MediaQuery.viewInsetsOf(context).bottom,
       ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              '设置中心',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 18),
-            _slider(
-              '窗口透明度',
-              settings.opacity,
-              0.35,
-              1,
-              (v) => _save(settings.copyWith(opacity: v)),
-            ),
-            const SizedBox(height: 8),
-            const Text('背景', style: TextStyle(fontWeight: FontWeight.w700)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+      child: Container(
+        decoration: BoxDecoration(
+          color: settings.transparentBackground
+              ? Colors.transparent
+              : Color(settings.backgroundColor).withValues(alpha: 1),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+        ),
+        child: DefaultTextStyle.merge(
+          style: TextStyle(color: Color(settings.textColor)),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                for (final color in const [
-                  0xfffcfbff,
-                  0xfffff7ed,
-                  0xfff0fdf4,
-                  0xffeff6ff,
-                  0xfffdf2f8,
-                  0xff1f2937,
-                ])
-                  ChoiceChip(
-                    label: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: Color(color),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xff928a9f)),
+                Row(
+                  children: [
+                    const Text(
+                      '设置中心',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                    selected:
-                        !settings.transparentBackground &&
-                        settings.backgroundColor == color,
-                    onSelected: (_) => _save(
-                      settings.copyWith(
-                        backgroundColor: color,
-                        transparentBackground: false,
-                      ),
+                    const Spacer(),
+                    IconButton(
+                      tooltip: '关闭设置',
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close_rounded),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                _slider(
+                  '窗口透明度',
+                  settings.opacity,
+                  0.35,
+                  1,
+                  (v) => _save(settings.copyWith(opacity: v)),
+                ),
+                const SizedBox(height: 8),
+                const Text('背景', style: TextStyle(fontWeight: FontWeight.w700)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final color in const [
+                      0xfffcfbff,
+                      0xfffff7ed,
+                      0xfff0fdf4,
+                      0xffeff6ff,
+                      0xfffdf2f8,
+                      0xff1f2937,
+                    ])
+                      ChoiceChip(
+                        label: Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: Color(color),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xff928a9f)),
+                          ),
+                        ),
+                        selected:
+                            !settings.transparentBackground &&
+                            settings.backgroundColor == color,
+                        onSelected: (_) => _save(
+                          settings.copyWith(
+                            backgroundColor: color,
+                            transparentBackground: false,
+                          ),
+                        ),
+                      ),
+                    ChoiceChip(
+                      avatar: const Icon(Icons.layers_clear_outlined, size: 18),
+                      label: const Text('无背景'),
+                      selected: settings.transparentBackground,
+                      onSelected: (_) =>
+                          _save(settings.copyWith(transparentBackground: true)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  '文字颜色',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    for (final color in const [
+                      0xff111827,
+                      0xff1f2937,
+                      0xff374151,
+                      0xff4c1d95,
+                      0xff0f766e,
+                      0xff9f1239,
+                    ])
+                      ChoiceChip(
+                        label: Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: Color(color),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xff928a9f)),
+                          ),
+                        ),
+                        selected: settings.textColor == color,
+                        onSelected: (_) =>
+                            _save(settings.copyWith(textColor: color)),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _slider(
+                  '字体大小',
+                  settings.fontScale,
+                  .8,
+                  1.4,
+                  (v) => _save(settings.copyWith(fontScale: v)),
+                ),
+                _slider(
+                  '窗口宽度',
+                  settings.windowWidth,
+                  480,
+                  1200,
+                  (v) => _save(settings.copyWith(windowWidth: v)),
+                ),
+                _slider(
+                  '窗口高度',
+                  settings.windowHeight,
+                  400,
+                  1000,
+                  (v) => _save(settings.copyWith(windowHeight: v)),
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('始终置顶'),
+                  value: settings.alwaysOnTop,
+                  onChanged: (v) => _save(settings.copyWith(alwaysOnTop: v)),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    settings.mousePassthrough
+                        ? Icons.lock_rounded
+                        : Icons.lock_open_rounded,
                   ),
-                ChoiceChip(
-                  avatar: const Icon(Icons.layers_clear_outlined, size: 18),
-                  label: const Text('无背景'),
-                  selected: settings.transparentBackground,
-                  onSelected: (_) =>
-                      _save(settings.copyWith(transparentBackground: true)),
+                  title: const Text('锁定内容区'),
+                  subtitle: const Text('请使用主页右下角按钮锁定；锁定后通过系统托盘解除'),
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('提醒'),
+                  subtitle: const Text('保留提醒开关，V1.0 不发送系统通知'),
+                  value: settings.remindersEnabled,
+                  onChanged: (v) =>
+                      _save(settings.copyWith(remindersEnabled: v)),
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('开机启动'),
+                  value: settings.launchAtStartup,
+                  onChanged: (v) =>
+                      _save(settings.copyWith(launchAtStartup: v)),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            _slider(
-              '字体大小',
-              settings.fontScale,
-              .8,
-              1.4,
-              (v) => _save(settings.copyWith(fontScale: v)),
-            ),
-            _slider(
-              '窗口宽度',
-              settings.windowWidth,
-              480,
-              1200,
-              (v) => _save(settings.copyWith(windowWidth: v)),
-            ),
-            _slider(
-              '窗口高度',
-              settings.windowHeight,
-              400,
-              1000,
-              (v) => _save(settings.copyWith(windowHeight: v)),
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('始终置顶'),
-              value: settings.alwaysOnTop,
-              onChanged: (v) => _save(settings.copyWith(alwaysOnTop: v)),
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('锁定内容区'),
-              subtitle: const Text('锁定后待办不可点击，设置和解锁按钮仍可操作'),
-              value: settings.mousePassthrough,
-              onChanged: (v) => _save(settings.copyWith(mousePassthrough: v)),
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('提醒'),
-              subtitle: const Text('保留提醒开关，V1.0 不发送系统通知'),
-              value: settings.remindersEnabled,
-              onChanged: (v) => _save(settings.copyWith(remindersEnabled: v)),
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('开机启动'),
-              value: settings.launchAtStartup,
-              onChanged: (v) => _save(settings.copyWith(launchAtStartup: v)),
-            ),
-          ],
+          ),
         ),
       ),
     ),

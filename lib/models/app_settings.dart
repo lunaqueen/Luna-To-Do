@@ -10,6 +10,7 @@ class AppSettings {
     this.launchAtStartup = false,
     this.backgroundColor = 0xfffcfbff,
     this.transparentBackground = false,
+    this.textColor = 0xff1f2937,
   });
 
   final double opacity;
@@ -22,6 +23,7 @@ class AppSettings {
   final bool launchAtStartup;
   final int backgroundColor;
   final bool transparentBackground;
+  final int textColor;
 
   AppSettings copyWith({
     double? opacity,
@@ -34,6 +36,7 @@ class AppSettings {
     bool? launchAtStartup,
     int? backgroundColor,
     bool? transparentBackground,
+    int? textColor,
   }) => AppSettings(
     opacity: opacity ?? this.opacity,
     fontScale: fontScale ?? this.fontScale,
@@ -45,6 +48,7 @@ class AppSettings {
     launchAtStartup: launchAtStartup ?? this.launchAtStartup,
     backgroundColor: backgroundColor ?? this.backgroundColor,
     transparentBackground: transparentBackground ?? this.transparentBackground,
+    textColor: textColor ?? this.textColor,
   );
 
   factory AppSettings.fromJson(Map<String, dynamic>? json) => AppSettings(
@@ -58,6 +62,7 @@ class AppSettings {
     launchAtStartup: json?['launchAtStartup'] as bool? ?? false,
     backgroundColor: json?['backgroundColor'] as int? ?? 0xfffcfbff,
     transparentBackground: json?['transparentBackground'] as bool? ?? false,
+    textColor: json?['textColor'] as int? ?? 0xff1f2937,
   );
 
   Map<String, dynamic> toJson() => {
@@ -71,5 +76,6 @@ class AppSettings {
     'launchAtStartup': launchAtStartup,
     'backgroundColor': backgroundColor,
     'transparentBackground': transparentBackground,
+    'textColor': textColor,
   };
 }
