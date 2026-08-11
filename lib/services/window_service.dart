@@ -73,7 +73,13 @@ class WindowService with TrayListener {
     if (!Platform.isMacOS && !Platform.isWindows) return;
     // Opacity affects the entire application window. The selected background
     // color is painted independently by Flutter.
-    await windowManager.setOpacity(settings.opacity);
+    if (Platform.isWindows) {
+      await _nativeWindowChannel.invokeMethod<void>('setOpacity', {
+        'opacity': settings.opacity,
+      });
+    } else {
+      await windowManager.setOpacity(settings.opacity);
+    }
     await windowManager.setBackgroundColor(Colors.transparent);
     await windowManager.setHasShadow(false);
     if (Platform.isMacOS) {
